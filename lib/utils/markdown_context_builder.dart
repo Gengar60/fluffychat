@@ -3,31 +3,69 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import 'dart:typed_data';
+
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:pasteboard/pasteboard.dart';
 
-class MarkdownContextBuilder extends StatelessWidget {
+class MarkdownContextBuilder extends StatefulWidget {
   final EditableTextState editableTextState;
   final TextEditingController controller;
+  final ValueChanged<Uint8List?>? onPasteImage;
 
   const MarkdownContextBuilder({
     required this.editableTextState,
     required this.controller,
+    this.onPasteImage,
     super.key,
   });
 
   @override
+  State<MarkdownContextBuilder> createState() => _MarkdownContextBuilderState();
+}
+
+class _MarkdownContextBuilderState extends State<MarkdownContextBuilder> {
+  bool _hasImageInClipboard = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.onPasteImage != null) {
+      Pasteboard.image.then((image) {
+        if (mounted) {
+          setState(() => _hasImageInClipboard = image != null);
+        }
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final value = editableTextState.textEditingValue;
+    final value = widget.editableTextState.textEditingValue;
     final selectedText = value.selection.textInside(value.text);
-    final buttonItems = editableTextState.contextMenuButtonItems;
+    final buttonItems = widget.editableTextState.contextMenuButtonItems;
+    final pasteImageButton = _hasImageInClipboard && widget.onPasteImage != null
+        ? ContextMenuButtonItem(
+            label: 'Paste Image',
+            onPressed: () {
+              Pasteboard.image.then((image) {
+                if (image != null) {
+                  widget.onPasteImage?.call(image);
+                  ContextMenuController.removeAny();
+                }
+              });
+            },
+          )
+        : null;
     final l10n = L10n.of(context);
 
     return AdaptiveTextSelectionToolbar.buttonItems(
-      anchors: editableTextState.contextMenuAnchors,
+      anchors: widget.editableTextState.contextMenuAnchors,
       buttonItems: [
         ...buttonItems,
+        if (pasteImageButton != null) pasteImageButton,
         if (selectedText.isNotEmpty) ...[
           ContextMenuButtonItem(
             label: l10n.link,
@@ -56,8 +94,8 @@ class MarkdownContextBuilder extends StatelessWidget {
               final url = urlString.startsWith('http')
                   ? Uri.parse(urlString)
                   : Uri.https(urlString);
-              final selection = controller.selection;
-              controller.text = controller.text.replaceRange(
+              final selection = widget.controller.selection;
+              widget.controller.text = widget.controller.text.replaceRange(
                 selection.start,
                 selection.end,
                 '[$selectedText]($url)',
@@ -68,8 +106,8 @@ class MarkdownContextBuilder extends StatelessWidget {
           ContextMenuButtonItem(
             label: l10n.checkList,
             onPressed: () {
-              final text = controller.text;
-              final selection = controller.selection;
+              final text = widget.controller.text;
+              final selection = widget.controller.selection;
 
               var start = selection.textBefore(text).lastIndexOf('\n');
               if (start == -1) start = 0;
@@ -91,7 +129,7 @@ class MarkdownContextBuilder extends StatelessWidget {
                         : '$checkBox $line',
                   )
                   .join('\n');
-              controller.text = controller.text.replaceRange(
+              widget.controller.text = widget.controller.text.replaceRange(
                 start,
                 end,
                 replacedRange,
@@ -102,8 +140,8 @@ class MarkdownContextBuilder extends StatelessWidget {
           ContextMenuButtonItem(
             label: l10n.boldText,
             onPressed: () {
-              final selection = controller.selection;
-              controller.text = controller.text.replaceRange(
+              final selection = widget.controller.selection;
+              widget.controller.text = widget.controller.text.replaceRange(
                 selection.start,
                 selection.end,
                 '**$selectedText**',
@@ -114,8 +152,8 @@ class MarkdownContextBuilder extends StatelessWidget {
           ContextMenuButtonItem(
             label: l10n.italicText,
             onPressed: () {
-              final selection = controller.selection;
-              controller.text = controller.text.replaceRange(
+              final selection = widget.controller.selection;
+              widget.controller.text = widget.controller.text.replaceRange(
                 selection.start,
                 selection.end,
                 '*$selectedText*',
@@ -126,8 +164,8 @@ class MarkdownContextBuilder extends StatelessWidget {
           ContextMenuButtonItem(
             label: l10n.strikeThrough,
             onPressed: () {
-              final selection = controller.selection;
-              controller.text = controller.text.replaceRange(
+              final selection = widget.controller.selection;
+              widget.controller.text = widget.controller.text.replaceRange(
                 selection.start,
                 selection.end,
                 '~~$selectedText~~',
