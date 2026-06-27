@@ -686,10 +686,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_webrtc
-      sha256: c4e8db6ed337b8c30d76cd7cd8c91693f5495e1aeb556cbcb73f1e5d5bdcf020
+      sha256: "0f89dee7f4c35dab5611f351c3897a3bfe9f7057720cc7da209b52455af4316e"
       url: "https://pub.dev"
     source: hosted
-    version: "1.5.1"
+    version: "1.5.2"
   frontend_server_client:
     dependency: transitive
     description:
@@ -1105,7 +1105,7 @@ packages:
     description:
       path: "."
       ref: "krille/fix-soft-logout-for-oidc"
-      resolved-ref: "332cc953cd0763cb962b3825c6d243f17c5f43b5"
+      resolved-ref: e5c016b5f66ab8611ebfe1181fac341a71ba40aa
       url: "https://github.com/famedly/matrix-dart-sdk.git"
     source: git
     version: "7.4.0"
